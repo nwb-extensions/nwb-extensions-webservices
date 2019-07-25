@@ -11,18 +11,18 @@ import tempfile
 from git import Repo
 import textwrap
 import github
-import conda_smithy.lint_recipe
+import nwb_extensions_smithy.lint_recipe
 import shutil
 from contextlib import contextmanager
 from datetime import datetime
 
 
-import conda_forge_webservices.linting as linting
-import conda_forge_webservices.status as status
-import conda_forge_webservices.feedstocks_service as feedstocks_service
-import conda_forge_webservices.update_teams as update_teams
-import conda_forge_webservices.commands as commands
-import conda_forge_webservices.update_me as update_me
+import .linting as linting
+import .status as status
+import .feedstocks_service as feedstocks_service
+import .update_teams as update_teams
+import .commands as commands
+import .update_me as update_me
 
 
 def get_combined_status(token, repo_name, sha):
@@ -62,7 +62,7 @@ def print_rate_limiting_info_for_token(token, user):
 def print_rate_limiting_info():
 
     d = [
-         (os.environ['GH_TOKEN'], "conda-forge-linter"),
+         (os.environ['GH_TOKEN'], "nwb-extensions-forge-linter"),
         ]
 
     print("")
@@ -77,7 +77,7 @@ class RegisterHandler(tornado.web.RequestHandler):
         token = os.environ.get('GH_TOKEN')
         headers = {'Authorization': 'token {}'.format(token)}
 
-        url = 'https://api.github.com/repos/conda-forge/staged-recipes/hooks'
+        url = 'https://api.github.com/repos/nwb-extensions/staged-extensions/hooks'
 
         payload = {
               "name": "web",
@@ -125,13 +125,13 @@ class LintingHookHandler(tornado.web.RequestHandler):
             pr_id = int(body['pull_request']['number'])
             is_open = body['pull_request']['state'] == 'open'
 
-            # Only do anything if we are working with conda-forge, and an open PR.
-            if is_open and owner == 'conda-forge':
+            # Only do anything if we are working with nwb-extensions, and an open PR.
+            if is_open and owner == 'nwb-extensions':
                 lint_info = linting.compute_lint_message(owner, repo_name, pr_id,
-                                                         repo_name == 'staged-recipes')
+                                                         repo_name == 'staged-extensions')
                 if lint_info:
                     msg = linting.comment_on_pr(owner, repo_name, pr_id, lint_info['message'],
-                                                search='conda-forge-linting service')
+                                                search='nwb-extensions-linting service')
                     linting.set_pr_status(owner, repo_name, lint_info, target_url=msg.html_url)
             print_rate_limiting_info()
         else:
@@ -152,7 +152,7 @@ class StatusHookHandler(tornado.web.RequestHandler):
             repo_full_name = body['repository']['full_name']
 
             # Only do something if it involves the status page
-            if repo_full_name == 'conda-forge/status':
+            if repo_full_name == 'nwb-extensions/status':
                 status.update()
             print_rate_limiting_info()
         else:
@@ -173,8 +173,8 @@ class UpdateFeedstockHookHandler(tornado.web.RequestHandler):
             repo_name = body['repository']['name']
             owner = body['repository']['owner']['login']
             ref = body['ref']
-            # Only do anything if we are working with conda-forge, and a push to master.
-            if owner == 'conda-forge' and ref == "refs/heads/master":
+            # Only do anything if we are working with nwb-extensions, and a push to master.
+            if owner == 'nwb-extensions' and ref == "refs/heads/master":
                 feedstocks_service.handle_feedstock_event(owner, repo_name)
             print_rate_limiting_info()
         else:
@@ -198,8 +198,8 @@ class UpdateTeamHookHandler(tornado.web.RequestHandler):
             commit = None
             if 'head_commit' in body:
                 commit = body['head_commit']['id']
-            # Only do anything if we are working with conda-forge, and a push to master.
-            if owner == 'conda-forge' and ref == "refs/heads/master":
+            # Only do anything if we are working with cnwb-extensions, and a push to master.
+            if owner == 'nwb-extensions' and ref == "refs/heads/master":
                 update_teams.update_team(owner, repo_name, commit)
             print_rate_limiting_info()
         else:
@@ -221,8 +221,8 @@ class CommandHookHandler(tornado.web.RequestHandler):
             action = body["action"]
             repo_name = body['repository']['name']
             owner = body['repository']['owner']['login']
-            # Only do anything if we are working with conda-forge
-            if owner != 'conda-forge':
+            # Only do anything if we are working with nwb-extensions
+            if owner != 'nwb-extensions':
                 return
             pr_repo = body['pull_request']['head']['repo']
             pr_owner = pr_repo['owner']['login']
@@ -248,8 +248,8 @@ class CommandHookHandler(tornado.web.RequestHandler):
             owner = body['repository']['owner']['login']
             issue_num = body['issue']['number']
 
-            # Only do anything if we are working with conda-forge
-            if owner != 'conda-forge':
+            # Only do anything if we are working with nwb-extensions
+            if owner != 'nwb-extensions':
                 return
             pull_request = False
             if "pull_request" in body["issue"]:
@@ -306,12 +306,12 @@ class UpdateWebservicesHookHandler(tornado.web.RequestHandler):
 
 def create_webapp():
     application = tornado.web.Application([
-        (r"/conda-linting/hook", LintingHookHandler),
-        (r"/conda-forge-status/hook", StatusHookHandler),
-        (r"/conda-forge-feedstocks/hook", UpdateFeedstockHookHandler),
-        (r"/conda-forge-teams/hook", UpdateTeamHookHandler),
-        (r"/conda-forge-command/hook", CommandHookHandler),
-        (r"/conda-webservice-update/hook", UpdateWebservicesHookHandler),
+        (r"/nwb-extensions-linting/hook", LintingHookHandler),
+        # (r"/nwb-extensions-forge-status/hook", StatusHookHandler),
+        (r"/nwb-extensions-feedstocks/hook", UpdateFeedstockHookHandler),
+        (r"/nwb-extensions-teams/hook", UpdateTeamHookHandler),
+        (r"/nwb-extensions-command/hook", CommandHookHandler),
+        (r"/nwb-extensions-webservice-update/hook", UpdateWebservicesHookHandler),
     ])
     return application
 

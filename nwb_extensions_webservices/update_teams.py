@@ -4,7 +4,7 @@ import github
 import os
 import subprocess
 from .utils import tmp_directory
-from conda_smithy.github import configure_github_team, get_cached_team
+from nwb_extensions_smithy.github import configure_github_team, get_cached_team
 import textwrap
 from functools import lru_cache
 import conda_build.api
@@ -13,8 +13,8 @@ import conda_build.api
 @lru_cache(maxsize=None)
 def get_filter_out_members():
     gh = github.Github(os.environ['GH_TOKEN'])
-    org = gh.get_organization('conda-forge')
-    teams = ['staged-recipes', 'help-r']
+    org = gh.get_organization('nwb-extensions')
+    teams = ['staged-extensions',]
     gh_teams = list(team for team in org.get_teams() if team.name in teams)
     members = set()
     for team in gh_teams:
@@ -46,23 +46,23 @@ def update_team(org_name, repo_name, commit=None):
                   permit_undefined_jinja=True, finalize=False,
                   bypass_env_check=True, trim_skip=False)[0][0]
 
-        current_maintainers, prev_maintainers, new_conda_forge_members = \
+        current_maintainers, prev_maintainers, new_org_members = \
             configure_github_team(meta, gh_repo, org, repo_name.replace("-feedstock", ""))
 
         if commit:
             message = textwrap.dedent("""
-                Hi! This is the friendly automated conda-forge-webservice.
+                Hi! This is the friendly automated nwb-extensions-webservice.
 
                 I updated the Github team because of this commit.
                 """)
-            newm = get_handles(new_conda_forge_members)
+            newm = get_handles(new_org_members)
             if newm:
                 message += textwrap.dedent("""
-                    - {} {} added to conda-forge. Welcome to conda-forge!
-                      Go to https://github.com/orgs/conda-forge/invitation see your invitation.
+                    - {} {} added to nwb-extensions. Welcome to nwb-extensions!
+                      Go to https://github.com/orgs/nwb-extensions/invitation see your invitation.
                 """.format(newm, "were" if newm.count(",") >= 1 else "was"))
 
-            addm = get_handles(current_maintainers - prev_maintainers - new_conda_forge_members)
+            addm = get_handles(current_maintainers - prev_maintainers - new_org_members)
             if addm:
                 message += textwrap.dedent("""
                     - {} {} added to this feedstock maintenance team.
@@ -72,11 +72,8 @@ def update_team(org_name, repo_name, commit=None):
                 message += textwrap.dedent("""
                     You should get push access to this feedstock and CI services.
 
-                    Feel free to join the community [chat room](https://gitter.im/conda-forge/conda-forge.github.io).
-
                     NOTE: Please make sure to not push to the repository directly.
                           Use branches in your fork for any changes and send a PR.
-                          More details [here](https://conda-forge.org/docs/maintainer/updating_pkgs.html#forking-and-pull-requests)
                 """)
 
                 c = gh_repo.get_commit(commit)

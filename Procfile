@@ -1,1 +1,1 @@
-web: python -m conda_forge_webservices.webapp
+web: python -m nwb_extensions_webservices.webapp

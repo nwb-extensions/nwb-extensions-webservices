@@ -7,7 +7,7 @@ from .utils import tmp_directory
 
 
 def handle_feedstock_event(org_name, repo_name):
-    if repo_name in ["conda-forge.github.io", "staged-recipes"]:
+    if repo_name in ["nwb-extensions.github.io", "staged-extensions"]:
         update_listing()
     elif repo_name.endswith("-feedstock"):
         update_feedstock(org_name, repo_name)
@@ -16,7 +16,7 @@ def handle_feedstock_event(org_name, repo_name):
 def update_listing():
     with tmp_directory() as tmp_dir:
         webpage_url = (
-            "https://github.com/conda-forge/conda-forge.github.io.git"
+            "https://github.com/nwb-extensions/nwb-extensions.github.io.git"
         )
         webpage_repo = git.Repo.clone_from(
             webpage_url,
@@ -25,7 +25,7 @@ def update_listing():
         webpage_dir = os.path.dirname(webpage_repo.git_dir)
 
         feedstocks_url = (
-            "https://github.com/conda-forge/feedstocks.git"
+            "https://github.com/nwb-extensions/feedstocks.git"
         )
         feedstocks_repo = git.Repo.clone_from(
             feedstocks_url,
@@ -34,7 +34,7 @@ def update_listing():
         feedstocks_dir = os.path.dirname(feedstocks_repo.git_dir)
 
         feedstocks_page_url = (
-            "https://{}@github.com/conda-forge/feedstocks.git"
+            "https://{}@github.com/nwb-extensions/feedstocks.git"
             "".format(os.environ["FEEDSTOCKS_GH_TOKEN"])
         )
         feedstocks_page_repo = git.Repo.clone_from(
@@ -74,7 +74,7 @@ def update_listing():
 
         if feedstocks_page_repo.is_dirty(working_tree=False, untracked_files=True):
             author = git.Actor(
-                "conda-forge-coordinator", "conda.forge.coordinator@gmail.com"
+                "nwb-extensions-admin", "nwbextensio" + "ns@" + "gm" + "ail.com"
             )
             feedstocks_page_repo.index.commit(
                 "Updated the feedstock listing.",
@@ -90,7 +90,7 @@ def update_feedstock(org_name, repo_name):
 
     with tmp_directory() as tmp_dir:
         feedstocks_url = (
-            "https://{}@github.com/conda-forge/feedstocks.git"
+            "https://{}@github.com/nwb-extensions/feedstocks.git"
             "".format(os.environ["FEEDSTOCKS_GH_TOKEN"])
         )
         feedstocks_repo = git.Repo.clone_from(
@@ -118,7 +118,7 @@ def update_feedstock(org_name, repo_name):
         # Submit changes
         if feedstocks_repo.is_dirty(working_tree=False, untracked_files=True):
             author = git.Actor(
-                "conda-forge-coordinator", "conda.forge.coordinator@gmail.com"
+                "nwb-extensions-admin", "nwbextensio" + "ns@" + "gm" + "ail.com"
             )
             feedstocks_repo.index.commit(
                 "Updated the {0} feedstock.".format(name),

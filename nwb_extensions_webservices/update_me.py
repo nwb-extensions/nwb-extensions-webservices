@@ -11,7 +11,7 @@ def update_me():
     """
     Update the webservice on Heroku by pushing a commit to this repo.
     """
-    pkgs = ["conda-build", "conda-smithy", "conda-forge-pinning"]
+    pkgs = ["conda-build", "nwb-extensions-smithy", "conda-forge-pinning"]
     installed_vers = get_installed_version(root_dir, pkgs)
     index = get_index(channel_urls=['conda-forge'])
     r = Resolve(index)
@@ -30,14 +30,13 @@ def update_me():
         return
 
     with tmp_directory() as tmp_dir:
-        repo_name = "conda-forge-webservices"
+        repo_name = "nwb-extensions-webservices"
         clone_dir = os.path.join(tmp_dir, repo_name)
         url = "https://{}@github.com/conda-forge/{}.git".format(
             os.environ['GH_TOKEN'], repo_name)
 
         repo = Repo.clone_from(url, clone_dir)
         msg_vers = ", ".join(["{}={}".format(k, v) for k,v in to_install.items()])
-        author = Actor("conda-forge-admin", "pelson.pub+conda-forge@gmail.com")
+        author = Actor("nwb-extensions-admin", "nwbexten" + "sions" + "@g" + "mail.c" + "om")
         repo.index.commit("Empty commit to rebuild for {}".format(msg_vers))
         repo.git.push("origin", "master")
-

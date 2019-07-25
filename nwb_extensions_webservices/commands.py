@@ -1,4 +1,4 @@
-from git import GitCommandError, Repo, Actor
+from git import GitCommandError, Repo
 import github
 import os
 import re
@@ -10,14 +10,12 @@ from .circle_ci import update_circle
 import textwrap
 
 
-pre = r"@conda-forge-(admin|linter)\s*[,:]?\s*"
+pre = r"@nwb-extensions-(admin|linter)\s*[,:]?\s*"
 COMMAND_PREFIX = re.compile(pre, re.I)
-ADD_NOARCH_MSG = re.compile(pre + "(please )?(add|make) `?noarch:? python`?", re.I)
 RERENDER_MSG = re.compile(pre + "(please )?re-?render", re.I)
 LINT_MSG = re.compile(pre + "(please )?(re-?)?lint", re.I)
 UPDATE_TEAM_MSG = re.compile(pre + "(please )?(update|refresh) (the )?team", re.I)
 UPDATE_CIRCLECI_KEY_MSG = re.compile(pre + "(please )?(update|refresh) (the )?circle", re.I)
-UPDATE_CB3_MSG = re.compile(pre + "(please )?update (for )?(cb|conda[- ]build)[- ]?3", re.I)
 
 
 def pr_comment(org_name, repo_name, issue_num, comment):
@@ -30,7 +28,7 @@ def pr_comment(org_name, repo_name, issue_num, comment):
 
 
 def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_num, comment):
-    is_staged_recipes = (repo_name == "staged-recipes")
+    is_staged_recipes = (repo_name == "staged-extensions")
     if not (repo_name.endswith("-feedstock") or is_staged_recipes):
         return
 
@@ -41,7 +39,7 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
         repo = gh.get_repo("{}/{}".format(org_name, repo_name))
         pull = repo.get_pull(int(pr_num))
         message = textwrap.dedent("""
-                Hi! This is the friendly automated conda-forge-webservice.
+                Hi! This is the friendly automated nwb-extensions-webservice.
 
                 I just wanted to let you know that I updated the circle-ci deploy key and followed the project.
                 """)
@@ -69,24 +67,10 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
         expected_changes = []
         extra_msg = ''
         if not is_staged_recipes:
-            do_noarch = do_cb3 = do_rerender = False
-            if ADD_NOARCH_MSG.search(comment):
-                do_noarch = do_rerender = True
-                expected_changes.append('add noarch')
-            if UPDATE_CB3_MSG.search(comment):
-                do_cb3 = do_rerender = True
-                expected_changes.append('update for conda-build 3')
+            do_rerender = False
             if RERENDER_MSG.search(comment):
                 do_rerender = True
                 expected_changes.append('re-render')
-
-            if do_noarch:
-                changed_anything |= make_noarch(repo)
-
-            if do_cb3:
-                c, cb3_changes = update_cb3(repo)
-                changed_anything |= c
-                extra_msg += '\n\n' + cb3_changes
 
             if do_rerender:
                 try:
@@ -109,7 +93,7 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
                     repo.remotes.origin.push()
                 except GitCommandError:
                     message = textwrap.dedent("""
-                        Hi! This is the friendly automated conda-forge-webservice.
+                        Hi! This is the friendly automated nwb-extensions-webservice.
 
                         I tried to {} for you, but it looks like I wasn't able to push to the {} branch of {}/{}. Did you check the "Allow edits from maintainers" box?
                         """).format(pr_branch, pr_owner, pr_repo, changes_str)
@@ -117,13 +101,13 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
             else:
                 if rerender_error:
                     message = textwrap.dedent("""
-                        Hi! This is the friendly automated conda-forge-webservice.
+                        Hi! This is the friendly automated nwb-extensionse-webservice.
 
-                        I tried to {} for you but ran into some issues, please ping conda-forge/core for further assistance.
+                        I tried to {} for you but ran into some issues, please ping nwb-extensions/core for further assistance.
                         """).format(changes_str)
                 else:
                     message = textwrap.dedent("""
-                        Hi! This is the friendly automated conda-forge-webservice.
+                        Hi! This is the friendly automated nwb-extensions-webservice.
 
                         I tried to {} for you, but it looks like there was nothing to do.
                         """).format(changes_str)
@@ -136,9 +120,8 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
 
     text = comment + title
 
-    issue_commands = [UPDATE_TEAM_MSG, ADD_NOARCH_MSG, UPDATE_CIRCLECI_KEY_MSG,
-                      RERENDER_MSG, UPDATE_CB3_MSG]
-    send_pr_commands = [ADD_NOARCH_MSG, RERENDER_MSG, UPDATE_CB3_MSG]
+    issue_commands = [UPDATE_TEAM_MSG, UPDATE_CIRCLECI_KEY_MSG, RERENDER_MSG]
+    send_pr_commands = [RERENDER_MSG,]
 
     if not any(command.search(text) for command in issue_commands):
         return
@@ -152,7 +135,7 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
         if UPDATE_TEAM_MSG.search(title):
             issue.edit(state="closed")
         message = textwrap.dedent("""
-                Hi! This is the friendly automated conda-forge-webservice.
+                Hi! This is the friendly automated nwb-extensions-webservice.
 
                 I just wanted to let you know that I updated the team with maintainers from master.
                 """)
@@ -163,7 +146,7 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
         if UPDATE_CIRCLECI_KEY_MSG.search(title):
             issue.edit(state="closed")
         message = textwrap.dedent("""
-                Hi! This is the friendly automated conda-forge-webservice.
+                Hi! This is the friendly automated nwb-extensions-webservice.
 
                 I just wanted to let you know that I updated the circle-ci deploy key and followed the project.
                 """)
@@ -180,7 +163,7 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
             upstream_repo_url = "https://{}@github.com/{}/{}.git".format(
                 os.environ['GH_TOKEN'], org_name, repo_name)
             git_repo = Repo.clone_from(repo_url, feedstock_dir)
-            forked_repo_branch = 'conda_forge_admin_{}'.format(issue_num)
+            forked_repo_branch = 'nwb_extensions_admin_{}'.format(issue_num)
             upstream = git_repo.create_remote('upstream', upstream_repo_url)
             upstream.fetch()
             new_branch = git_repo.create_head(forked_repo_branch, upstream.refs.master)
@@ -188,32 +171,7 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
 
             changed_anything = False
             extra_msg = ""
-            if UPDATE_CB3_MSG.search(text):
-                pr_title = "MNT: Update for conda-build 3"
-                comment_msg = "updated the recipe for conda-build 3"
-                to_close = UPDATE_CB3_MSG.search(title)
-
-                if ADD_NOARCH_MSG.search(text):
-                    changed_anything |= make_noarch(git_repo)
-                    pr_title += ' and add noarch: python'
-                    comment_msg += ' and added `noarch: python`'
-
-                c, cb3_changes = update_cb3(git_repo)
-                changed_anything |= c
-                if not c:
-                    cb3_changes = "There weren't any changes to make for conda-build 3."
-                extra_msg = '\n\n' + cb3_changes
-
-                changed_anything |= rerender(git_repo)
-            elif ADD_NOARCH_MSG.search(text):
-                pr_title = "MNT: Add noarch: python"
-                comment_msg = "made the recipe `noarch: python`"
-                to_close = ADD_NOARCH_MSG.search(title)
-
-                changed_anything |= make_noarch(git_repo)
-                changed_anything |= rerender(git_repo)
-
-            elif RERENDER_MSG.search(text):
+            if RERENDER_MSG.search(text):
                 pr_title = "MNT: rerender"
                 comment_msg = "rerendered the recipe"
                 to_close = RERENDER_MSG.search(title)
@@ -223,7 +181,7 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
             if changed_anything:
                 git_repo.git.push("origin", forked_repo_branch)
                 pr_message = textwrap.dedent("""
-                        Hi! This is the friendly automated conda-forge-webservice.
+                        Hi! This is the friendly automated nwb-extensions-webservice.
 
                         I've {} as instructed in #{}.{}
 
@@ -239,14 +197,14 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
                     "master", "{}:{}".format(forked_user, forked_repo_branch))
 
                 message = textwrap.dedent("""
-                        Hi! This is the friendly automated conda-forge-webservice.
+                        Hi! This is the friendly automated nwb-extensions-webservice.
 
                         I just wanted to let you know that I {} in {}/{}#{}.
                         """).format(comment_msg, org_name, repo_name, pr.number)
                 issue.create_comment(message)
             else:
                 message = textwrap.dedent("""
-                        Hi! This is the friendly automated conda-forge-webservice.
+                        Hi! This is the friendly automated nwb-extensions-webservice.
 
                         I've {} as requested, but nothing actually changed.
                         """).format(comment_msg)
@@ -257,44 +215,12 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
 
 def rerender(repo):
     curr_head = repo.active_branch.commit
-    ret = subprocess.call(["conda", "smithy", "rerender", "-c", "auto"], cwd=repo.working_dir)
+    ret = subprocess.call(["nwb" "extensions" "smithy", "rerender", "-c", "auto"], cwd=repo.working_dir)
 
     if ret:
         raise RuntimeError
     else:
         return repo.active_branch.commit != curr_head
-
-
-def make_noarch(repo):
-    meta_yaml = os.path.join(repo.working_dir, "recipe", "meta.yaml")
-    with open(meta_yaml, 'r') as fh:
-        lines = [line for line in fh]
-    with open(meta_yaml, 'w') as fh:
-        build_line = False
-        for line in lines:
-            if build_line:
-                spaces = len(line) - len(line.lstrip())
-                line = "{}noarch: python\n{}".format(" "*spaces, line)
-            build_line = False
-            if line.rstrip() == 'build:':
-                build_line = True
-            fh.write(line)
-    repo.index.add([meta_yaml])
-    author = Actor("conda-forge-admin", "pelson.pub+conda-forge@gmail.com")
-    repo.index.commit("Add noarch:python option", author=author)
-    return True
-
-
-def update_cb3(repo):
-    output = subprocess.check_output(["conda", "smithy", "update-cb3"], cwd=repo.working_dir)
-    output = output.decode('utf-8')
-    repo.git.add(A=True)
-    if repo.is_dirty():
-        author = Actor("conda-forge-admin", "pelson.pub+conda-forge@gmail.com")
-        repo.index.commit("Update for conda-build 3", author=author)
-        return True, output
-    else:
-        return False, output
 
 
 def relint(owner, repo_name, pr_num):

@@ -7,11 +7,11 @@ def update_circle(user, project):
 
     try:
     # Create a token at https://circleci.com/account/api. Put it in circle.token
-        with open(os.path.expanduser('~/.conda-smithy/circle.token'), 'r') as fh:
+        with open(os.path.expanduser('~/.nwb-extensions-smithy/circle.token'), 'r') as fh:
             circle_token = fh.read().strip()
     except IOError:
         print('No circle token.  Create a token at https://circleci.com/account/api and\n'
-              'put it in ~/.conda-smithy/circle.token')
+              'put it in ~/.nwb-extensions-smithy/circle.token')
 
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}

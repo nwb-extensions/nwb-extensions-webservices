@@ -6,13 +6,13 @@ import time
 import requests
 from git import GitCommandError, Repo
 import github
-import conda_smithy.lint_recipe
+import nwb_extensions_smithy.lint_recipe
 
 from .utils import tmp_directory
 
 def find_recipes(a_dir):
     return [os.path.dirname(y) for x in os.walk(a_dir)
-            for y in glob(os.path.join(x[0], 'meta.yaml'))]
+            for y in glob(os.path.join(x[0], 'ndx-meta.yaml'))]
 
 def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
     gh = github.Github(os.environ['GH_TOKEN'])
@@ -63,12 +63,12 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
         # Raise an error if the PR is not mergeable.
         if not mergeable:
             message = textwrap.dedent("""
-                Hi! This is the friendly automated conda-forge-linting service.
-                
-                I was trying to look for recipes to lint for you, but it appears we have a merge conflict.
+                Hi! This is the friendly automated nwb-extensions-linting service.
+
+                I was trying to look for extensions to lint for you, but it appears we have a merge conflict.
                 Please try to merge or rebase with the base branch to resolve this conflict.
-                
-                Please ping the 'conda-forge/core' team (using the @ notation in a comment) if you believe this is a bug.
+
+                Please ping the 'nwb-extensions/core' team (using the @ notation in a comment) if you believe this is a bug.
                 """)
             status = 'merge_conflict'
 
@@ -107,14 +107,14 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
             rel_path = os.path.relpath(recipe_dir, tmp_dir)
             rel_pr_recipes.append(rel_path)
             try:
-                lints, hints = conda_smithy.lint_recipe.main(recipe_dir, conda_forge=True, return_hints=True)
+                lints, hints = nwb_extensions_smithy.lint_recipe.main(recipe_dir, conda_forge=True, return_hints=True)
 
             except Exception as err:
                 print('ERROR:', err)
-                lints = ["Failed to even lint the recipe, probably because of a conda-smithy bug :cry:. "
-                         "This likely indicates a problem in your `meta.yaml`, though. "
-                         "To get a traceback to help figure out what's going on, install conda-smithy "
-                         "and run `conda smithy recipe-lint .` from the recipe directory. "]
+                lints = ["Failed to even lint the extension, probably because of a nwb-extensions-smithy bug :cry:. "
+                         "This likely indicates a problem in your `ndx-meta.yaml`, though. "
+                         "To get a traceback to help figure out what's going on, install nwb-extensions-smithy "
+                         "and run `nwb extensions smithy recipe-lint .` from the extension directory. "]
             if lints:
                 all_pass = False
                 messages.append("\nFor **{}**:\n\n{}".format(rel_path,
@@ -128,22 +128,22 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
     recipe_code_blocks = ', '.join('```{}```'.format(r) for r in rel_pr_recipes)
 
     good = textwrap.dedent("""
-    Hi! This is the friendly automated conda-forge-linting service.
+    Hi! This is the friendly automated nwb-extensions-linting service.
 
-    I just wanted to let you know that I linted all conda-recipes in your PR ({}) and found it was in an excellent condition.
+    I just wanted to let you know that I linted all NWB extensions in your PR ({}) and found it was in an excellent condition.
 
     """.format(recipe_code_blocks))
 
     mixed = good + textwrap.dedent("""
     I do have some suggestions for making it better though...
-    
+
     {}
     """).format('\n'.join(messages))
 
     bad = textwrap.dedent("""
-    Hi! This is the friendly automated conda-forge-linting service.
+    Hi! This is the friendly automated nwb-extensions-linting service.
 
-    I wanted to let you know that I linted all conda-recipes in your PR ({}) and found some lint.
+    I wanted to let you know that I linted all NWB extensions in your PR ({}) and found some lint.
 
     Here's what I've got...
 
@@ -152,12 +152,12 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
 
     if not pr_recipes:
         message = textwrap.dedent("""
-            Hi! This is the friendly automated conda-forge-linting service.
-            
-            I was trying to look for recipes to lint for you, but couldn't find any.
-            Please ping the 'conda-forge/core' team (using the @ notation in a comment) if you believe this is a bug.
+            Hi! This is the friendly automated nwb-extensions-linting service.
+
+            I was trying to look for extensions to lint for you, but couldn't find any.
+            Please ping the 'nwb-extensions/core' team (using the @ notation in a comment) if you believe this is a bug.
             """)
-        status = 'no recipes'
+        status = 'no extensions'
     elif all_pass and len(hints):
         message = mixed
         status = 'mixed'
@@ -217,14 +217,14 @@ def set_pr_status(owner, repo_name, lint_info, target_url=None):
     if lint_info:
         commit = repo.get_commit(lint_info['sha'])
         if lint_info['status'] == 'good':
-            commit.create_status("success", description="All recipes are excellent.",
-                                 context="conda-forge-linter", target_url=target_url)
+            commit.create_status("success", description="All extensions are excellent.",
+                                 context="nwb-extensions-linter", target_url=target_url)
         elif lint_info['status'] == 'mixed':
-            commit.create_status("success", description="Some recipes have hints.",
-                                 context="conda-forge-linter", target_url=target_url)
+            commit.create_status("success", description="Some extensions have hints.",
+                                 context="nwb-extensions-linter", target_url=target_url)
         else:
-            commit.create_status("failure", description="Some recipes need some changes.",
-                                 context="conda-forge-linter", target_url=target_url)
+            commit.create_status("failure", description="Some extensions need some changes.",
+                                 context="nwb-extensions-linter", target_url=target_url)
 
 
 def main():
@@ -235,7 +235,7 @@ def main():
     parser.add_argument('--enable-commenting', help='Turn on PR commenting',
                         action='store_true')
     parser.add_argument('--ignore-base',
-                        help='Ignore recipes in the base branch of the PR',
+                        help='Ignore extensions in the base branch of the PR',
                         action='store_true')
 
     args = parser.parse_args()
