@@ -3,7 +3,7 @@ nwb-extensions extension linting and other automated functionality for GitHub
 
 This repository is the source for the Heroku hosted webapp which lints nwb-extensions's extensions and performs other
 useful automated functionality, such as updating teams and re-rendering on request.
-The linting itself comes from nwb-extensions-smithy (https://github.com/nwb-extensions/nwb-extensions-smithy)
+The linting itself comes from [nwb-extensions-smithy](https://github.com/nwb-extensions/nwb-extensions-smithy).
 
 Rather than using OAuth, this app is using a pre-determined "personal access token" which has
 appropriate nwb-extensions permissions. It has been configured with:
