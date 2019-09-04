@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 def main():
     skw = dict(
         name='nwb-extensions-webservices',
-        version='1.0',
+        version='0.1.0',
         author='Ryan Ly',
         author_email='nwbextensions@gmail.com',
         url='https://github.com/nwb-extensions/nwb-extensions-webservices',

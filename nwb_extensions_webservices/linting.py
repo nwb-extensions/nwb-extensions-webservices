@@ -3,16 +3,17 @@ import os
 import textwrap
 import time
 
-import requests
 from git import GitCommandError, Repo
 import github
 import nwb_extensions_smithy.lint_recipe
 
 from .utils import tmp_directory
 
+
 def find_recipes(a_dir):
     return [os.path.dirname(y) for x in os.walk(a_dir)
             for y in glob(os.path.join(x[0], 'ndx-meta.yaml'))]
+
 
 def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
     gh = github.Github(os.environ['GH_TOKEN'])
@@ -69,7 +70,7 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
                 Please try to merge or rebase with the base branch to resolve this conflict.
 
                 Please ping the 'nwb-extensions/core' team (using the @ notation in a comment) if you believe this is a bug.
-                """)
+                """)  # noqa: E501
             status = 'merge_conflict'
 
             lint_info = {'message': message,
@@ -123,7 +124,6 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
                 messages.append("\nFor **{}**:\n\n{}".format(rel_path,
                                                              '\n'.join(' * {}'.format(hint) for hint in hints)))
 
-
     # Put the recipes in the form "```recipe/a```, ```recipe/b```".
     recipe_code_blocks = ', '.join('```{}```'.format(r) for r in rel_pr_recipes)
 
@@ -132,7 +132,7 @@ def compute_lint_message(repo_owner, repo_name, pr_id, ignore_base=False):
 
     I just wanted to let you know that I linted all NWB extensions in your PR ({}) and found it was in an excellent condition.
 
-    """.format(recipe_code_blocks))
+    """.format(recipe_code_blocks))  # noqa: E501
 
     mixed = good + textwrap.dedent("""
     I do have some suggestions for making it better though...
@@ -196,7 +196,7 @@ def comment_on_pr(owner, repo_name, pr_id, message, force=False, search=None):
     my_login = gh.get_user().login
     if my_login in comment_owners:
         my_comments = [comment for comment in comments
-                           if comment.user.login == my_login]
+                       if comment.user.login == my_login]
         if search is not None:
             my_comments = [comment for comment in my_comments
                            if search in comment.body]

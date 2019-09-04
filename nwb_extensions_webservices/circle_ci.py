@@ -1,12 +1,13 @@
 import requests
 import os
 
+
 def update_circle(user, project):
     if not project.endswith("-feedstock"):
         return
 
     try:
-    # Create a token at https://circleci.com/account/api. Put it in circle.token
+        # Create a token at https://circleci.com/account/api. Put it in circle.token
         with open(os.path.expanduser('~/.nwb-extensions-smithy/circle.token'), 'r') as fh:
             circle_token = fh.read().strip()
     except IOError:
@@ -22,7 +23,8 @@ def update_circle(user, project):
     response = requests.post(url, headers={})
 
     url = url_template.format(component='{}/{}/checkout-key'.format(user, project).lower(), token=circle_token)
-    response = requests.post(url, headers=headers, json={'type':'deploy-key'})
+    response = requests.post(url, headers=headers, json={'type': 'deploy-key'})
+
 
 if __name__ == '__main__':
     import argparse

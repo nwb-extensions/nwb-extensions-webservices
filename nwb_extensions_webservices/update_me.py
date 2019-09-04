@@ -1,8 +1,7 @@
 import os
 from git import Repo, Actor
 
-from conda_build.conda_interface import (VersionOrder, MatchSpec,
-    get_installed_version, root_dir, get_index, Resolve)
+from conda_build.conda_interface import (VersionOrder, MatchSpec, get_installed_version, root_dir, get_index, Resolve)
 
 from .utils import tmp_directory
 
@@ -36,7 +35,7 @@ def update_me():
             os.environ['GH_TOKEN'], repo_name)
 
         repo = Repo.clone_from(url, clone_dir)
-        msg_vers = ", ".join(["{}={}".format(k, v) for k,v in to_install.items()])
+        msg_vers = ", ".join(["{}={}".format(k, v) for k, v in to_install.items()])
         author = Actor("nwb-extensions-admin", "nwbexten" + "sions" + "@g" + "mail.c" + "om")
         repo.index.commit("Empty commit to rebuild for {}".format(msg_vers))
         repo.git.push("origin", "master")

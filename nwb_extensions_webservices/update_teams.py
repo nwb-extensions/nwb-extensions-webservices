@@ -1,10 +1,8 @@
-from git import GitCommandError, Repo
-from conda_build.metadata import MetaData
+from git import Repo
 import github
 import os
-import subprocess
 from .utils import tmp_directory
-from nwb_extensions_smithy.github import configure_github_team, get_cached_team
+from nwb_extensions_smithy.github import configure_github_team
 import textwrap
 from functools import lru_cache
 import conda_build.api
@@ -14,7 +12,7 @@ import conda_build.api
 def get_filter_out_members():
     gh = github.Github(os.environ['GH_TOKEN'])
     org = gh.get_organization('nwb-extensions')
-    teams = ['staged-extensions',]
+    teams = ['staged-extensions', ]
     gh_teams = list(team for team in org.get_teams() if team.name in teams)
     members = set()
     for team in gh_teams:
@@ -41,10 +39,10 @@ def update_team(org_name, repo_name, commit=None):
     gh_repo = org.get_repo(repo_name)
 
     with tmp_directory() as tmp_dir:
-        repo = Repo.clone_from(gh_repo.clone_url, tmp_dir)
+        Repo.clone_from(gh_repo.clone_url, tmp_dir)
         meta = conda_build.api.render(tmp_dir,
-                  permit_undefined_jinja=True, finalize=False,
-                  bypass_env_check=True, trim_skip=False)[0][0]
+                                      permit_undefined_jinja=True, finalize=False,
+                                      bypass_env_check=True, trim_skip=False)[0][0]
 
         current_maintainers, prev_maintainers, new_org_members = \
             configure_github_team(meta, gh_repo, org, repo_name.replace("-feedstock", ""))

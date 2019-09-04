@@ -1,7 +1,7 @@
-nwb-extensions-smithy>=3
+nwb-extensions-smithy
 #conda-forge-pinning
 tornado
 pygithub
+gitpython
 nose
 mock
-git

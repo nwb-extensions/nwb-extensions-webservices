@@ -47,7 +47,7 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
 
     pr_commands = [LINT_MSG]
     if not is_staged_recipes:
-        pr_commands += [ADD_NOARCH_MSG, RERENDER_MSG, UPDATE_CB3_MSG]
+        pr_commands += [RERENDER_MSG]
 
     if not any(command.search(comment) for command in pr_commands):
         return
@@ -65,7 +65,6 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
         changed_anything = False
         rerender_error = False
         expected_changes = []
-        extra_msg = ''
         if not is_staged_recipes:
             do_rerender = False
             if RERENDER_MSG.search(comment):
@@ -96,7 +95,7 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
                         Hi! This is the friendly automated nwb-extensions-webservice.
 
                         I tried to {} for you, but it looks like I wasn't able to push to the {} branch of {}/{}. Did you check the "Allow edits from maintainers" box?
-                        """).format(pr_branch, pr_owner, pr_repo, changes_str)
+                        """).format(pr_branch, pr_owner, pr_repo, changes_str)  # noqa: E501
                     pull.create_issue_comment(message)
             else:
                 if rerender_error:
@@ -104,7 +103,7 @@ def pr_detailed_comment(org_name, repo_name, pr_owner, pr_repo, pr_branch, pr_nu
                         Hi! This is the friendly automated nwb-extensionse-webservice.
 
                         I tried to {} for you but ran into some issues, please ping nwb-extensions/core for further assistance.
-                        """).format(changes_str)
+                        """).format(changes_str)  # noqa: E501
                 else:
                     message = textwrap.dedent("""
                         Hi! This is the friendly automated nwb-extensions-webservice.
@@ -121,7 +120,7 @@ def issue_comment(org_name, repo_name, issue_num, title, comment):
     text = comment + title
 
     issue_commands = [UPDATE_TEAM_MSG, UPDATE_CIRCLECI_KEY_MSG, RERENDER_MSG]
-    send_pr_commands = [RERENDER_MSG,]
+    send_pr_commands = [RERENDER_MSG]
 
     if not any(command.search(text) for command in issue_commands):
         return
@@ -225,7 +224,7 @@ def rerender(repo):
 
 def relint(owner, repo_name, pr_num):
     pr = int(pr_num)
-    lint_info = compute_lint_message(owner, repo_name, pr, repo_name == 'staged-recipes')
+    lint_info = compute_lint_message(owner, repo_name, pr, repo_name == 'staged-extensions')
     if not lint_info:
         print('Linting was skipped.')
     else:

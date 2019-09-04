@@ -5,24 +5,10 @@ import tornado.ioloop
 import tornado.web
 
 import requests
-import os
-from glob import glob
-import tempfile
-from git import Repo
-import textwrap
 import github
-import nwb_extensions_smithy.lint_recipe
-import shutil
-from contextlib import contextmanager
 from datetime import datetime
 
-
-import .linting as linting
-import .status as status
-import .feedstocks_service as feedstocks_service
-import .update_teams as update_teams
-import .commands as commands
-import .update_me as update_me
+from . import linting, status, feedstocks_service, update_teams, commands, update_me
 
 
 def get_combined_status(token, repo_name, sha):
@@ -53,7 +39,8 @@ def print_rate_limiting_info_for_token(token, user):
     gh_api_reset_time = gh.get_rate_limit().rate.reset
     gh_api_reset_time -= datetime.utcnow()
     msg = "{user} - remaining {remaining} out of {total}.".format(remaining=gh_api_remaining,
-            total=gh_api_total, user=user)
+                                                                  total=gh_api_total,
+                                                                  user=user)
     print("-"*len(msg))
     print(msg)
     print("Will reset in {time}.".format(time=gh_api_reset_time))
@@ -62,7 +49,7 @@ def print_rate_limiting_info_for_token(token, user):
 def print_rate_limiting_info():
 
     d = [
-         (os.environ['GH_TOKEN'], "nwb-extensions-forge-linter"),
+         (os.environ['GH_TOKEN'], "nwb-extensions-linter"),
         ]
 
     print("")
@@ -120,7 +107,6 @@ class LintingHookHandler(tornado.web.RequestHandler):
         elif event == 'pull_request':
             body = tornado.escape.json_decode(self.request.body)
             repo_name = body['repository']['name']
-            repo_url = body['repository']['clone_url']
             owner = body['repository']['owner']['login']
             pr_id = int(body['pull_request']['number'])
             is_open = body['pull_request']['state'] == 'open'
@@ -133,7 +119,7 @@ class LintingHookHandler(tornado.web.RequestHandler):
                     msg = linting.comment_on_pr(owner, repo_name, pr_id, lint_info['message'],
                                                 search='nwb-extensions-linting service')
                     linting.set_pr_status(owner, repo_name, lint_info, target_url=msg.html_url)
-            print_rate_limiting_info()
+            # print_rate_limiting_info()  # KeyError: 'GH_TOKEN'
         else:
             print('Unhandled event "{}".'.format(event))
             self.set_status(404)
@@ -215,8 +201,7 @@ class CommandHookHandler(tornado.web.RequestHandler):
 
         if event == 'ping':
             self.write('pong')
-        elif event == 'pull_request_review' or event == 'pull_request' \
-            or event == 'pull_request_review_comment':
+        elif event == 'pull_request_review' or event == 'pull_request' or event == 'pull_request_review_comment':
             body = tornado.escape.json_decode(self.request.body)
             action = body["action"]
             repo_name = body['repository']['name']
@@ -307,7 +292,7 @@ class UpdateWebservicesHookHandler(tornado.web.RequestHandler):
 def create_webapp():
     application = tornado.web.Application([
         (r"/nwb-extensions-linting/hook", LintingHookHandler),
-        # (r"/nwb-extensions-forge-status/hook", StatusHookHandler),
+        (r"/nwb-extensions-status/hook", StatusHookHandler),
         (r"/nwb-extensions-feedstocks/hook", UpdateFeedstockHookHandler),
         (r"/nwb-extensions-teams/hook", UpdateTeamHookHandler),
         (r"/nwb-extensions-command/hook", CommandHookHandler),
